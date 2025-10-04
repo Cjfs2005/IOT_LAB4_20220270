@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/locationsFragment">
+
+    <fragment
+        android:id="@+id/locationsFragment"
+        android:name="com.example.iot_lab4_20220270.fragments.LocationsFragment"
+        android:label="Locations"
+        tools:layout="@layout/fragment_locations" />
+
+    <fragment
+        android:id="@+id/forecastFragment"
+        android:name="com.example.iot_lab4_20220270.fragments.ForecastFragment"
+        android:label="Pronóstico"
+        tools:layout="@layout/fragment_forecast" />
+
+    <fragment
+        android:id="@+id/futureFragment"
+        android:name="com.example.iot_lab4_20220270.fragments.FutureFragment"
+        android:label="Futuro"
+        tools:layout="@layout/fragment_future" />
+
+</navigation>

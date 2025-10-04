@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">TELE-WEATHER</string>
+    <string name="welcome_title">TELE-WEATHER</string>
+    <string name="welcome_subtitle">Seguimiento y Predicción del Clima Mundial</string>
+    <string name="btn_ingresar">Ingresar</string>
+    <string name="elaborado_por">Elaborado por: Christian Flores - 20220270</string>
+    <string name="no_internet_title">Sin Conexión a Internet</string>
+    <string name="no_internet_message">Para usar TELE-WEATHER necesitas conexión a Internet. ¿Deseas ir a Configuración?</string>
+    <string name="configuracion">Configuración</string>
+    <string name="cancelar">Cancelar</string>
+    <string name="weather_icon_1">Icono del clima 1</string>
+    <string name="weather_icon_2">Icono del clima 2</string>
+    <string name="buscar">Buscar</string>
+    <string name="buscar_locacion_hint">Buscar por Ciudad/Distrito</string>
+    <string name="id_locacion_hint">ID Locación</string>
+    <string name="dias_forecast_hint">Días Forecast</string>
+    <string name="fecha_interes_hint">Fecha de Interés</string>
+    <string name="locations">Locations</string>
+    <string name="pronostico">Pronóstico</string>
+    <string name="futuro">Futuro</string>
+    <string name="confirmacion_borrar">¿Desea borrar los últimos pronósticos obtenidos?</string>
+    <string name="si">Sí</string>
+    <string name="no">No</string>
+</resources>
