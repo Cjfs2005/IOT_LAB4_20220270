@@ -56,13 +56,15 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
             holder.tvForecastLocationId.setText("ID: " + location.getId());
         }
 
-        // Usar métodos directos de WeatherDay
         holder.tvMaxTemp.setText(String.format("Máx: %.1f°C", forecastDay.getMaxTempC()));
         holder.tvMinTemp.setText(String.format("Mín: %.1f°C", forecastDay.getMinTempC()));
         
         if (forecastDay.getCondition() != null) {
             holder.tvCondition.setText(forecastDay.getCondition().getText());
         }
+
+        holder.tvExtraInfo.setText(String.format("Humedad: %d%%  |  Viento máx: %.1f km/h", 
+                forecastDay.getAvgHumidity(), forecastDay.getMaxWindKph()));
     }
 
     @Override
@@ -71,8 +73,8 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
     }
 
     public class ForecastViewHolder extends RecyclerView.ViewHolder {
-        TextView tvForecastDate, tvForecastLocation, tvForecastLocationId;
-        TextView tvMaxTemp, tvMinTemp, tvCondition;
+    TextView tvForecastDate, tvForecastLocation, tvForecastLocationId;
+    TextView tvMaxTemp, tvMinTemp, tvCondition, tvExtraInfo;
 
         public ForecastViewHolder(@NonNull View itemView) {
             super(itemView);
@@ -82,6 +84,7 @@ public class ForecastAdapter extends RecyclerView.Adapter<ForecastAdapter.Foreca
             tvMaxTemp = itemView.findViewById(R.id.tvMaxTemp);
             tvMinTemp = itemView.findViewById(R.id.tvMinTemp);
             tvCondition = itemView.findViewById(R.id.tvCondition);
+            tvExtraInfo = itemView.findViewById(R.id.tvExtraInfo);
         }
     }
 }

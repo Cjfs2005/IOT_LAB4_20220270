@@ -37,7 +37,7 @@
             android:layout_weight="1"
             android:text="@string/locations"
             android:textColor="@android:color/white"
-            android:background="@android:color/transparent"
+            android:background="@drawable/nav_button_selector"
             android:textSize="12sp" />
 
         <Button
@@ -47,7 +47,7 @@
             android:layout_weight="1"
             android:text="@string/pronostico"
             android:textColor="@android:color/white"
-            android:background="@android:color/transparent"
+            android:background="@drawable/nav_button_selector"
             android:textSize="12sp" />
 
         <Button
@@ -57,7 +57,7 @@
             android:layout_weight="1"
             android:text="@string/futuro"
             android:textColor="@android:color/white"
-            android:background="@android:color/transparent"
+            android:background="@drawable/nav_button_selector"
             android:textSize="12sp" />
 
     </LinearLayout>

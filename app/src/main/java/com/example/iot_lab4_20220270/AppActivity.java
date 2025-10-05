@@ -5,8 +5,8 @@ import android.os.Bundle;
 import androidx.activity.OnBackPressedCallback;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.navigation.NavController;
-import androidx.navigation.Navigation;
 import androidx.navigation.fragment.NavHostFragment;
+import androidx.navigation.NavOptions;
 
 import com.example.iot_lab4_20220270.databinding.ActivityAppBinding;
 import com.example.iot_lab4_20220270.models.Location;
@@ -22,61 +22,71 @@ public class AppActivity extends AppCompatActivity {
         binding = ActivityAppBinding.inflate(getLayoutInflater());
         setContentView(binding.getRoot());
 
-        // Configurar Navigation Controller
         NavHostFragment navHostFragment = (NavHostFragment) getSupportFragmentManager()
                 .findFragmentById(R.id.nav_host_fragment);
         navController = navHostFragment.getNavController();
 
-        // Configurar botones de navegación
-        binding.btnLocations.setOnClickListener(v -> {
-            navController.navigate(R.id.locationsFragment);
+        binding.btnLocations.setOnClickListener(v -> navigateTopLevel(R.id.locationsFragment));
+        binding.btnPronostico.setOnClickListener(v -> navigateTopLevel(R.id.forecastFragment));
+        binding.btnFuturo.setOnClickListener(v -> navigateTopLevel(R.id.futureFragment));
+
+        navController.addOnDestinationChangedListener((controller, destination, arguments) -> {
+            updateNavigationHighlight(destination.getId());
         });
 
-        binding.btnPronostico.setOnClickListener(v -> {
-            navController.navigate(R.id.forecastFragment);
-        });
-
-        binding.btnFuturo.setOnClickListener(v -> {
-            navController.navigate(R.id.futureFragment);
-        });
-
-        // Configurar el manejo del botón de retroceso
         getOnBackPressedDispatcher().addCallback(this, new OnBackPressedCallback(true) {
             @Override
             public void handleOnBackPressed() {
-                // Si estamos en un fragmento específico, volver al MainActivity
                 if (navController.getCurrentDestination() != null) {
                     int currentFragmentId = navController.getCurrentDestination().getId();
                     if (currentFragmentId == R.id.locationsFragment || 
                         currentFragmentId == R.id.forecastFragment || 
                         currentFragmentId == R.id.futureFragment) {
-                        finish(); // Volver al MainActivity
+                        finish();
                         return;
                     }
                 }
-                // Si no manejamos el evento, permitir el comportamiento por defecto
                 setEnabled(false);
                 getOnBackPressedDispatcher().onBackPressed();
             }
         });
     }
-    
-    // Métodos públicos para comunicación entre fragments (según Clase 6.1)
-    
-    /**
-     * Método llamado desde LocationsFragment al seleccionar una ubicación
-     * Navega a ForecastFragment pasando la location por Bundle
-     */
+
     public void navigateToForecast(Location location) {
         Bundle bundle = new Bundle();
         bundle.putSerializable("selected_location", location);
-        navController.navigate(R.id.forecastFragment, bundle);
+        NavOptions opts = new NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .setPopUpTo(navController.getGraph().getId(), false)
+                .build();
+        navController.navigate(R.id.forecastFragment, bundle, opts);
     }
-    
-    /**
-     * Método llamado desde cualquier fragment para obtener el NavController
-     */
+
+    private void updateNavigationHighlight(int destinationId) {
+        binding.btnLocations.setSelected(false);
+        binding.btnPronostico.setSelected(false);
+        binding.btnFuturo.setSelected(false);
+
+        if (destinationId == R.id.locationsFragment) {
+            binding.btnLocations.setSelected(true);
+        } else if (destinationId == R.id.forecastFragment) {
+            binding.btnPronostico.setSelected(true);
+        } else if (destinationId == R.id.futureFragment) {
+            binding.btnFuturo.setSelected(true);
+        }
+    }
     public NavController getNavController() {
         return navController;
+    }
+
+    private void navigateTopLevel(int destinationId) {
+        if (navController.getCurrentDestination() != null && navController.getCurrentDestination().getId() == destinationId) {
+            return;
+        }
+        NavOptions opts = new NavOptions.Builder()
+                .setLaunchSingleTop(true)
+                .setPopUpTo(navController.getGraph().getId(), false)
+                .build();
+        navController.navigate(destinationId, null, opts);
     }
 }

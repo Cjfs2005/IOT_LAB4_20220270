@@ -1,7 +1,6 @@
 package com.example.iot_lab4_20220270.fragments;
 
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -37,7 +36,6 @@ public class LocationsFragment extends Fragment {
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Inicializar Retrofit
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(WeatherApiService.BASE_URL)
                 .addConverterFactory(GsonConverterFactory.create())
@@ -66,9 +64,7 @@ public class LocationsFragment extends Fragment {
         binding.rvLocations.setLayoutManager(new LinearLayoutManager(getContext()));
         binding.rvLocations.setAdapter(adapter);
 
-        // Configurar click listener para navegar al fragmento de pronóstico
         adapter.setOnLocationClickListener(location -> {
-            // Usar getActivity() para comunicación con AppActivity (según Clase 6.1)
             AppActivity appActivity = (AppActivity) getActivity();
             if (appActivity != null) {
                 appActivity.navigateToForecast(location);
@@ -100,20 +96,17 @@ public class LocationsFragment extends Fragment {
                     List<Location> locations = response.body();
                     if (!locations.isEmpty()) {
                         adapter.setLocationList(locations);
-                        Log.d("LocationsFragment", "Found " + locations.size() + " locations");
                     } else {
                         Toast.makeText(getContext(), "No se encontraron ubicaciones", Toast.LENGTH_SHORT).show();
                     }
                 } else {
                     Toast.makeText(getContext(), "Error en la búsqueda: " + response.code(), Toast.LENGTH_SHORT).show();
-                    Log.e("LocationsFragment", "Error: " + response.code() + " " + response.message());
                 }
             }
 
             @Override
             public void onFailure(Call<List<Location>> call, Throwable t) {
                 Toast.makeText(getContext(), "Error de conexión: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                Log.e("LocationsFragment", "Network error", t);
             }
         });
     }

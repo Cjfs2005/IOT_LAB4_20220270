@@ -25,10 +25,8 @@ public class Location implements Serializable {
     @SerializedName("url")
     private String url;
     
-    // Constructor vacío
     public Location() {}
-    
-    // Getters y Setters
+
     public int getId() { return id; }
     public void setId(int id) { this.id = id; }
     

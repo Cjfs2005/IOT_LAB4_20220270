@@ -89,6 +89,15 @@
 
         </LinearLayout>
 
+        <TextView
+            android:id="@+id/tvExtraInfo"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="6dp"
+            android:text="Humedad: 70%  |  Viento máx: 10.5 km/h"
+            android:textSize="12sp"
+            android:textColor="@android:color/darker_gray" />
+
     </LinearLayout>
 
 </androidx.cardview.widget.CardView>

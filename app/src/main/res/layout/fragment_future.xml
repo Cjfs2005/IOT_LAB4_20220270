@@ -40,11 +40,13 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:hint="@string/fecha_interes_hint"
-            android:inputType="date"
+            android:hint="Fecha"
+            android:inputType="text"
+            android:maxLength="10"
             android:padding="8dp"
             android:background="@android:color/transparent"
-            android:layout_marginStart="8dp" />
+            android:layout_marginStart="8dp"
+            android:importantForAutofill="no" />
 
         <Button
             android:id="@+id/btnBuscarFuturo"
@@ -60,7 +62,7 @@
     <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="💡 Formato de fecha: YYYY-MM-DD\n📅 Futuro: 14-300 días desde hoy\n📅 Pasado: hasta 1 año atrás"
+        android:text="Formato: YYYY-MM-DD (Futuro 14-300 días, Pasado hasta 1 año)"
         android:textColor="@android:color/white"
         android:textSize="12sp"
         android:gravity="center"

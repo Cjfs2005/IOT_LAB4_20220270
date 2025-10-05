@@ -7,7 +7,6 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +25,8 @@ import com.example.iot_lab4_20220270.models.WeatherResponse;
 import com.example.iot_lab4_20220270.models.Location;
 import com.example.iot_lab4_20220270.WeatherApiService;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -34,31 +35,34 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class ForecastFragment extends Fragment implements SensorEventListener {
 
-    private static final String TAG = "ForecastFragment";
     private FragmentForecastBinding binding;
     private ForecastAdapter adapter;
     private WeatherApiService weatherApiService;
     
-    // Sensor variables
     private SensorManager sensorManager;
     private Sensor accelerometer;
-    private static final double SHAKE_THRESHOLD = 10.0;
+    private static final double SHAKE_THRESHOLD = 14.0;
     private long lastShakeTime = 0;
-    private static final int SHAKE_DELAY = 2000; // 2 seconds
+    private static final int SHAKE_DELAY = 2500;
+    private static final float ALPHA = 0.8f;
+    private float[] gravity = new float[3];
+    private Integer lastSearchedId = null;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Inicializar Retrofit
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(WeatherApiService.BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+    Gson gson = new GsonBuilder()
+        .registerTypeAdapter(com.example.iot_lab4_20220270.models.WeatherDay.class, new com.example.iot_lab4_20220270.models.WeatherDay.Deserializer())
+        .create();
+
+    Retrofit retrofit = new Retrofit.Builder()
+        .baseUrl(WeatherApiService.BASE_URL)
+        .addConverterFactory(GsonConverterFactory.create(gson))
+        .build();
         
         weatherApiService = retrofit.create(WeatherApiService.class);
         
-        // Inicializar sensor
         sensorManager = (SensorManager) requireActivity().getSystemService(Context.SENSOR_SERVICE);
         accelerometer = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
     }
@@ -77,12 +81,10 @@ public class ForecastFragment extends Fragment implements SensorEventListener {
         setupRecyclerView();
         setupSearchButton();
         
-        // Obtener Location del Bundle y cargar pronóstico
         Bundle args = getArguments();
         if (args != null) {
             Location selectedLocation = (Location) args.getSerializable("selected_location");
             if (selectedLocation != null) {
-                Log.d(TAG, "Ubicación recibida: " + selectedLocation.getName());
                 fetchForecast(selectedLocation);
             }
         }
@@ -91,7 +93,6 @@ public class ForecastFragment extends Fragment implements SensorEventListener {
     @Override
     public void onResume() {
         super.onResume();
-        // Registrar el sensor solo cuando el fragmento está activo
         if (accelerometer != null) {
             sensorManager.registerListener(this, accelerometer, SensorManager.SENSOR_DELAY_UI);
         }
@@ -100,7 +101,6 @@ public class ForecastFragment extends Fragment implements SensorEventListener {
     @Override
     public void onPause() {
         super.onPause();
-        // Desregistrar el sensor cuando el fragmento no está activo
         sensorManager.unregisterListener(this);
     }
 
@@ -112,9 +112,19 @@ public class ForecastFragment extends Fragment implements SensorEventListener {
 
     private void setupSearchButton() {
         binding.btnBuscarPronostico.setOnClickListener(v -> {
-            String locationQuery = binding.etIdLocacion.getText().toString().trim();
+            String rawInput = binding.etIdLocacion.getText().toString().trim();
+            if (rawInput.isEmpty()) {
+                Toast.makeText(getContext(), "Ingrese ID de locación", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (!rawInput.matches("\\d+")) {
+                Toast.makeText(getContext(), "Sólo se acepta ID numérico", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String locationQuery = "id:" + rawInput;
+            try { lastSearchedId = Integer.parseInt(rawInput); } catch (NumberFormatException ignored) {}
+
             String daysStr = binding.etDiasForecast.getText().toString().trim();
-            
             if (!locationQuery.isEmpty() && !daysStr.isEmpty()) {
                 try {
                     int days = Integer.parseInt(daysStr);
@@ -134,19 +144,24 @@ public class ForecastFragment extends Fragment implements SensorEventListener {
 
     private void fetchForecast(Location location) {
         if (location != null) {
-            binding.tvLocationInfo.setText("Locación: " + location.getName() + " - ID: " + location.getId());
-            binding.etIdLocacion.setText("id:" + location.getId());
-            binding.etDiasForecast.setText("7"); // Default 7 días
-            
-            // Obtener pronóstico automáticamente
-            getForecast("id:" + location.getId(), 7);
+            binding.tvLocationInfo.setText("Locación: " + location.getName() + "  (ID: " + location.getId() + ")");
+            binding.etIdLocacion.setText(String.valueOf(location.getId()));
+            binding.etDiasForecast.setText("14");
+            String normalized = "id:" + location.getId();
+            lastSearchedId = location.getId();
+            getForecast(normalized, 14);
         }
     }
 
     private void getForecast(String locationQuery, int days) {
+        String queryToSend = locationQuery.trim();
+        if (queryToSend.matches("\\d+")) {
+            queryToSend = "id:" + queryToSend;
+        }
+
         Call<WeatherResponse> call = weatherApiService.getForecast(
-                WeatherApiService.API_KEY, 
-                locationQuery, 
+                WeatherApiService.API_KEY,
+                queryToSend,
                 days
         );
 
@@ -157,42 +172,46 @@ public class ForecastFragment extends Fragment implements SensorEventListener {
                     WeatherResponse weatherResponse = response.body();
                     if (weatherResponse.getForecast() != null && 
                         weatherResponse.getForecast().getForecastday() != null) {
+                        if (weatherResponse.getLocation() != null && weatherResponse.getLocation().getId() == 0 && lastSearchedId != null) {
+                            weatherResponse.getLocation().setId(lastSearchedId);
+                        }
                         
                         adapter.setForecastList(
                             weatherResponse.getForecast().getForecastday(),
                             weatherResponse.getLocation()
                         );
                         
-                        Log.d("ForecastFragment", "Forecast loaded: " + 
-                              weatherResponse.getForecast().getForecastday().size() + " days");
                     }
                 } else {
                     Toast.makeText(getContext(), "Error obteniendo pronóstico: " + response.code(), Toast.LENGTH_SHORT).show();
-                    Log.e("ForecastFragment", "Error: " + response.code() + " " + response.message());
                 }
             }
 
             @Override
             public void onFailure(Call<WeatherResponse> call, Throwable t) {
                 Toast.makeText(getContext(), "Error de conexión: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-                Log.e("ForecastFragment", "Network error", t);
             }
         });
     }
 
-    // Implementación del SensorEventListener
     @Override
     public void onSensorChanged(SensorEvent event) {
         if (event.sensor.getType() == Sensor.TYPE_ACCELEROMETER) {
             float x = event.values[0];
             float y = event.values[1];
             float z = event.values[2];
-            
-            // Calcular la magnitud del vector de aceleración
-            double acceleration = Math.sqrt(x * x + y * y + z * z);
-            
-            // Detectar agitación
-            if (acceleration > SHAKE_THRESHOLD) {
+
+            gravity[0] = ALPHA * gravity[0] + (1 - ALPHA) * x;
+            gravity[1] = ALPHA * gravity[1] + (1 - ALPHA) * y;
+            gravity[2] = ALPHA * gravity[2] + (1 - ALPHA) * z;
+
+            float linearX = x - gravity[0];
+            float linearY = y - gravity[1];
+            float linearZ = z - gravity[2];
+
+            double linearAcceleration = Math.sqrt(linearX * linearX + linearY * linearY + linearZ * linearZ);
+
+            if (linearAcceleration > SHAKE_THRESHOLD) {
                 long currentTime = System.currentTimeMillis();
                 if (currentTime - lastShakeTime > SHAKE_DELAY) {
                     lastShakeTime = currentTime;
@@ -203,9 +222,7 @@ public class ForecastFragment extends Fragment implements SensorEventListener {
     }
 
     @Override
-    public void onAccuracyChanged(Sensor sensor, int accuracy) {
-        // No necesitamos implementar esto
-    }
+    public void onAccuracyChanged(Sensor sensor, int accuracy) { }
     
     private void showShakeConfirmationDialog() {
         new AlertDialog.Builder(requireContext())

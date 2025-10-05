@@ -46,7 +46,7 @@ public class HourAdapter extends RecyclerView.Adapter<HourAdapter.HourViewHolder
         holder.tvHourTemp.setText(String.format("%.1f°C", hour.getTempC()));
         
         if (location != null) {
-            holder.tvHourLocationInfo.setText(location.getName() + " - ID: " + location.getId());
+            holder.tvHourLocationInfo.setText(location.getName() + " (ID: " + location.getId() + ")");
         }
         
         if (hour.getCondition() != null) {

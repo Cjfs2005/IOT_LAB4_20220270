@@ -1,7 +1,7 @@
 package com.example.iot_lab4_20220270.fragments;
 
+import android.app.DatePickerDialog;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -16,13 +16,12 @@ import com.example.iot_lab4_20220270.adapters.HourAdapter;
 import com.example.iot_lab4_20220270.databinding.FragmentFutureBinding;
 import com.example.iot_lab4_20220270.models.WeatherResponse;
 import com.example.iot_lab4_20220270.WeatherApiService;
+import java.time.LocalDate;
+import java.time.format.DateTimeParseException;
+import java.time.temporal.ChronoUnit;
 
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.Locale;
-
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -34,16 +33,20 @@ public class FutureFragment extends Fragment {
     private FragmentFutureBinding binding;
     private HourAdapter adapter;
     private WeatherApiService weatherApiService;
+    private Integer lastSearchedId = null;
 
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         
-        // Inicializar Retrofit
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(WeatherApiService.BASE_URL)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
+    Gson gson = new GsonBuilder()
+        .registerTypeAdapter(com.example.iot_lab4_20220270.models.WeatherDay.class, new com.example.iot_lab4_20220270.models.WeatherDay.Deserializer())
+        .create();
+
+    Retrofit retrofit = new Retrofit.Builder()
+        .baseUrl(WeatherApiService.BASE_URL)
+        .addConverterFactory(GsonConverterFactory.create(gson))
+        .build();
         
         weatherApiService = retrofit.create(WeatherApiService.class);
     }
@@ -60,7 +63,7 @@ public class FutureFragment extends Fragment {
         super.onViewCreated(view, savedInstanceState);
 
         setupRecyclerView();
-        setupSearchButton();
+    setupButtons();
     }
 
     private void setupRecyclerView() {
@@ -69,60 +72,62 @@ public class FutureFragment extends Fragment {
         binding.rvFutureHours.setAdapter(adapter);
     }
 
-    private void setupSearchButton() {
+    private void setupButtons() {
+        binding.etFechaInteres.setFocusable(true);
+        binding.etFechaInteres.setFocusableInTouchMode(true);
+        View.OnClickListener dateClickListener = v -> {
+            java.time.LocalDate today = java.time.LocalDate.now(java.time.ZoneId.of("America/Lima"));
+            DatePickerDialog dialog = new DatePickerDialog(requireContext(), (view, year, month, dayOfMonth) -> {
+                int realMonth = month + 1;
+                String formatted = String.format(java.util.Locale.US, "%04d-%02d-%02d", year, realMonth, dayOfMonth);
+                binding.etFechaInteres.setText(formatted);
+            }, today.getYear(), today.getMonthValue() - 1, today.getDayOfMonth());
+            dialog.show();
+        };
+        binding.etFechaInteres.setOnClickListener(dateClickListener);
+        binding.etFechaInteres.setOnFocusChangeListener((v, hasFocus) -> { if (hasFocus) dateClickListener.onClick(v); });
         binding.btnBuscarFuturo.setOnClickListener(v -> {
-            String locationQuery = binding.etIdLocacionFuture.getText().toString().trim();
+            String idInput = binding.etIdLocacionFuture.getText().toString().trim();
             String dateStr = binding.etFechaInteres.getText().toString().trim();
-            
-            if (!locationQuery.isEmpty() && !dateStr.isEmpty()) {
-                if (isValidDateFormat(dateStr)) {
-                    searchWeatherForDate(locationQuery, dateStr);
-                } else {
-                    Toast.makeText(getContext(), "Formato de fecha incorrecto. Use YYYY-MM-DD", Toast.LENGTH_SHORT).show();
-                }
+
+            if (idInput.isEmpty()) {
+                Toast.makeText(getContext(), "Ingrese ID de locación", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            if (!idInput.matches("\\d+")) {
+                Toast.makeText(getContext(), "Sólo se acepta ID numérico", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            String locationQuery = "id:" + idInput;
+            try { lastSearchedId = Integer.parseInt(idInput); } catch (NumberFormatException ignored) {}
+
+            if (!dateStr.isEmpty()) {
+                searchWeatherForDate(locationQuery, dateStr);
             } else {
                 Toast.makeText(getContext(), "Complete todos los campos", Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    private boolean isValidDateFormat(String dateStr) {
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-        sdf.setLenient(false);
-        try {
-            sdf.parse(dateStr);
-            return true;
-        } catch (ParseException e) {
-            return false;
-        }
-    }
-
     private void searchWeatherForDate(String locationQuery, String dateStr) {
-        // Determinar si la fecha es futura o pasada
-        Calendar today = Calendar.getInstance();
-        Calendar searchDate = Calendar.getInstance();
-        
         try {
-            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd", Locale.US);
-            Date date = sdf.parse(dateStr);
-            searchDate.setTime(date);
-            
-            // Calcular diferencia en días
-            long diffInMillis = searchDate.getTimeInMillis() - today.getTimeInMillis();
-            long diffInDays = diffInMillis / (1000 * 60 * 60 * 24);
-            
-            if (diffInDays >= 14 && diffInDays <= 300) {
-                // Usar Future API
+            LocalDate today = LocalDate.now(java.time.ZoneId.of("America/Lima"));
+            LocalDate target = LocalDate.parse(dateStr);
+            long diffInDays = ChronoUnit.DAYS.between(today, target);
+
+            if (diffInDays == 0) {
+                Toast.makeText(getContext(), "Hoy: use Pronóstico (Forecast)", Toast.LENGTH_LONG).show();
+            } else if (diffInDays > 0 && diffInDays < 14) {
+                Toast.makeText(getContext(), "1-13 días: use Pronóstico (Forecast)", Toast.LENGTH_LONG).show();
+            } else if (diffInDays >= 14 && diffInDays <= 300) {
                 getFutureWeather(locationQuery, dateStr);
             } else if (diffInDays < 0 && diffInDays >= -365) {
-                // Usar History API
                 getHistoryWeather(locationQuery, dateStr);
             } else {
-                Toast.makeText(getContext(), "La fecha debe estar entre 1 año atrás y 300 días en el futuro", Toast.LENGTH_LONG).show();
+                Toast.makeText(getContext(), "Rango válido: Pasado hasta 365 días | Futuro 14-300 días", Toast.LENGTH_LONG).show();
             }
-            
-        } catch (ParseException e) {
-            Toast.makeText(getContext(), "Error procesando la fecha", Toast.LENGTH_SHORT).show();
+        } catch (DateTimeParseException e) {
+            Toast.makeText(getContext(), "Formato de fecha incorrecto (YYYY-MM-DD)", Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -174,15 +179,15 @@ public class FutureFragment extends Fragment {
                 weatherResponse.getForecast().getForecastday() != null &&
                 !weatherResponse.getForecast().getForecastday().isEmpty()) {
                 
-                // Obtener las horas del primer (y único) día
                 if (weatherResponse.getForecast().getForecastday().get(0).getHour() != null) {
+                    if (weatherResponse.getLocation() != null && weatherResponse.getLocation().getId() == 0 && lastSearchedId != null) {
+                        weatherResponse.getLocation().setId(lastSearchedId);
+                    }
                     adapter.setHourList(
                         weatherResponse.getForecast().getForecastday().get(0).getHour(),
                         weatherResponse.getLocation()
                     );
                     
-                    Log.d("FutureFragment", apiType + " weather loaded: " + 
-                          weatherResponse.getForecast().getForecastday().get(0).getHour().size() + " hours");
                 } else {
                     Toast.makeText(getContext(), "No se encontraron datos por horas", Toast.LENGTH_SHORT).show();
                 }
@@ -191,13 +196,11 @@ public class FutureFragment extends Fragment {
             }
         } else {
             Toast.makeText(getContext(), "Error obteniendo datos: " + response.code(), Toast.LENGTH_SHORT).show();
-            Log.e("FutureFragment", "Error: " + response.code() + " " + response.message());
         }
     }
 
     private void handleNetworkError(Throwable t) {
         Toast.makeText(getContext(), "Error de conexión: " + t.getMessage(), Toast.LENGTH_SHORT).show();
-        Log.e("FutureFragment", "Network error", t);
     }
 
     @Override

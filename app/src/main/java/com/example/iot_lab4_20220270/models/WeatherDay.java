@@ -1,10 +1,10 @@
 package com.example.iot_lab4_20220270.models;
 
 import com.google.gson.annotations.SerializedName;
+import com.google.gson.*;
+import java.lang.reflect.Type;
 
 public class WeatherDay {
-    
-    // Datos obligatorios según laboratorio
     private String date;
     
     @SerializedName("maxtemp_c")
@@ -15,7 +15,6 @@ public class WeatherDay {
     
     private Condition condition;
     
-    // Datos adicionales importantes (sin excederse)
     @SerializedName("avghumidity")
     private int avgHumidity;
     
@@ -25,14 +24,11 @@ public class WeatherDay {
     @SerializedName("uv")
     private double uv;
     
-    // Para API Future/History: datos por horas
     @SerializedName("hour")
     private java.util.List<Hour> hour;
     
-    // Constructors
     public WeatherDay() {}
     
-    // Getters y Setters
     public String getDate() { return date; }
     public void setDate(String date) { this.date = date; }
     
@@ -56,4 +52,32 @@ public class WeatherDay {
     
     public java.util.List<Hour> getHour() { return hour; }
     public void setHour(java.util.List<Hour> hour) { this.hour = hour; }
+
+    public static class Deserializer implements JsonDeserializer<WeatherDay> {
+        @Override
+        public WeatherDay deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            WeatherDay wd = new WeatherDay();
+            JsonObject obj = json.getAsJsonObject();
+            
+            JsonElement dateEl = obj.get("date");
+            if (dateEl != null && !dateEl.isJsonNull()) wd.setDate(dateEl.getAsString());
+            
+            JsonObject dayObj = obj.has("day") && obj.get("day").isJsonObject() ? obj.getAsJsonObject("day") : null;
+            if (dayObj != null) {
+                if (dayObj.has("maxtemp_c")) wd.setMaxTempC(dayObj.get("maxtemp_c").getAsDouble());
+                if (dayObj.has("mintemp_c")) wd.setMinTempC(dayObj.get("mintemp_c").getAsDouble());
+                if (dayObj.has("avghumidity")) wd.setAvgHumidity(dayObj.get("avghumidity").getAsInt());
+                if (dayObj.has("maxwind_kph")) wd.setMaxWindKph(dayObj.get("maxwind_kph").getAsDouble());
+                if (dayObj.has("uv")) wd.setUv(dayObj.get("uv").getAsDouble());
+                if (dayObj.has("condition") && dayObj.get("condition").isJsonObject()) {
+                    wd.setCondition(context.deserialize(dayObj.get("condition"), Condition.class));
+                }
+            }
+            
+            if (obj.has("hour") && obj.get("hour").isJsonArray()) {
+                wd.setHour(java.util.Arrays.asList(context.deserialize(obj.get("hour"), Hour[].class)));
+            }
+            return wd;
+        }
+    }
 }
