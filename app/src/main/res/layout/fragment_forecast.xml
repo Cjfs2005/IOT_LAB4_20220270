@@ -56,17 +56,6 @@
 
     </LinearLayout>
 
-    <!-- Información de la locación seleccionada -->
-    <TextView
-        android:id="@+id/tvLocationInfo"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Seleccione una locación desde el menú Locations"
-        android:textColor="@android:color/white"
-        android:textSize="14sp"
-        android:gravity="center"
-        android:layout_marginBottom="8dp"
-        android:visibility="visible" />
 
     <!-- RecyclerView para mostrar los pronósticos -->
     <androidx.recyclerview.widget.RecyclerView

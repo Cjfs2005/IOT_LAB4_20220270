@@ -48,6 +48,12 @@ public class ForecastFragment extends Fragment implements SensorEventListener {
     private float[] gravity = new float[3];
     private Integer lastSearchedId = null;
 
+/*
+Modelo: GPT-5 (en modo Ask usando Github Copilot para que reciba contexto del proyecto)
+Prompt: "Necesito el código para manejar el acelerómetro en un Fragment (Forecast) que detecte una agitación por encima de un umbral y pida confirmación antes de limpiar la lista del RecyclerView. Debe usar únicamente sensores básicos (SensorManager, TYPE_ACCELEROMETER), ajustar un umbral suficientemente alto para evitar falsos positivos y tomar las consideraciones adicionales necesarias para que funcione correctamente"
+Correcciones: "Se ajustó el umbral a 14.0 tras pruebas. Se agregó un SHAKE_DELAY para evitar múltiples apariciones del diálogo de confirmación. Se simplificó el filtrado manteniendo ALPHA=0.8." 
+*/
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -144,7 +150,6 @@ public class ForecastFragment extends Fragment implements SensorEventListener {
 
     private void fetchForecast(Location location) {
         if (location != null) {
-            binding.tvLocationInfo.setText("Locación: " + location.getName() + "  (ID: " + location.getId() + ")");
             binding.etIdLocacion.setText(String.valueOf(location.getId()));
             binding.etDiasForecast.setText("14");
             String normalized = "id:" + location.getId();

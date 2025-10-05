@@ -3,6 +3,11 @@ package com.example.iot_lab4_20220270.models;
 import com.google.gson.annotations.SerializedName;
 import java.io.Serializable;
 
+/*
+Modelo: GPT-5 (en modo Ask usando Github Copilot para que reciba contexto del proyecto)
+Prompt: "En base a las indicaciones del laboratorio, propón y modela los models/beans que serán necesarios para consumir WeatherAPI (search, forecast, future, history). Incluye un modelo Location con id, name, region, country, lat, lon y url usando Gson @SerializedName, implementando Serializable para poder pasarlo en un bundle entre fragments."
+Correcciones: "Se aceptó directamente la propuesta. No fue necesario cambiar nombres de campos. Solo se tuvo que asegurar que 'id' se mantenga como int y que el modelo permanezca sin herencias para alinearse con lo visto en clase." 
+*/
 public class Location implements Serializable {
     @SerializedName("id")
     private int id;

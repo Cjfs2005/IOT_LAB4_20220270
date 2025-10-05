@@ -35,6 +35,12 @@ public class FutureFragment extends Fragment {
     private WeatherApiService weatherApiService;
     private Integer lastSearchedId = null;
 
+/*
+Modelo: GPT-5 (en modo Ask usando Github Copilot para que reciba contexto del proyecto)
+Prompt: "Necesito la lógica y código en un Fragment para decidir entre llamar future.json (14 a 300 días en el futuro) o history.json (1 a 365 días en el pasado) de WeatherAPI, validando que 0 días (hoy) y 1-13 días futuros se indiquen como caso de Forecast existente. Incluir validaciones con y mostrar mensajes Toast claros en español y sólo proceder a la llamada correcta." 
+Correcciones: "Se mantuvo la estructura propuesta casi intacta. Se ajustó el mensaje para rango inválido consolidando ambos límites (pasado 365, futuro 14-300). Se añadió el ID si la respuesta no lo trae y se forzó Input numérico en validación." 
+*/
+
     @Override
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
